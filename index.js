@@ -1,7 +1,7 @@
 // NBA : ton appli d'origine (HTML et code inchangés), livrée en plugin.
 // Ses données sont dans le dossier du plugin, que NeoBase sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoBase.
 // Elle demande l'accès complet pour utiliser les outils d'interface de NeoBase. NeoBase ne l'ouvre que si elle est signée.
-const HTML = "<div class=\"appWrap\">\n      <div class=\"agHead\"><span class=\"label\">NBA</span><span id=\"nbaDay\"></span>\n        <div class=\"agNav\" id=\"nbaDayNav\"><button class=\"btn px\" id=\"nbaPrev\" title=\"Nuit précédente\">&lt;</button><button class=\"btn px\" id=\"nbaToday\">CETTE NUIT</button><button class=\"btn px\" id=\"nbaNext\" title=\"Nuit suivante\">&gt;</button></div>\n        <div class=\"agNav\" id=\"nbaTabs\"><button class=\"btn px\" data-v=\"games\">MATCHS</button><button class=\"btn px\" data-v=\"standings\">CLASSEMENT</button></div></div>\n      <div id=\"nbaGames\" class=\"nbaGrid\"></div>\n      <div id=\"nbaStandings\" class=\"stCols\"></div>\n      <div id=\"nbaDetail\" style=\"display:none\"></div>\n      <div class=\"hint\">Données ESPN, heures de Paris. Clique sur un match pour sa feuille de match et ses stats avancées, sur un joueur pour ses stats. L'étoile d'une équipe en fait ton équipe : ses matchs passent en premier.</div>\n    </div>";
+const HTML = "<div class=\"appWrap\">\n      <div class=\"agHead\"><span class=\"label\">NBA</span><span id=\"nbaDay\"></span>\n        <div class=\"agNav\" id=\"nbaDayNav\"><button class=\"btn px\" id=\"nbaPrev\" title=\"Nuit précédente\">&lt;</button><button class=\"btn px\" id=\"nbaToday\">CETTE NUIT</button><button class=\"btn px\" id=\"nbaNext\" title=\"Nuit suivante\">&gt;</button></div>\n        <div class=\"agNav\" id=\"nbaTabs\"><button class=\"btn px\" data-v=\"games\">MATCHS</button><button class=\"btn px\" data-v=\"standings\">CLASSEMENT</button></div></div>\n      <label style=\"display:flex;gap:8px;align-items:center;margin:6px 0 10px;color:var(--shell);font-size:14px\"><input type=\"checkbox\" id=\"nbaCal\"> Ajouter les matchs de mes équipes favorites (★) à mon emploi du temps, mis à jour automatiquement</label>\n      <div id=\"nbaGames\" class=\"nbaGrid\"></div>\n      <div id=\"nbaStandings\" class=\"stCols\"></div>\n      <div id=\"nbaDetail\" style=\"display:none\"></div>\n      <div class=\"hint\">Données ESPN, heures de Paris. Clique sur un match pour sa feuille de match et ses stats avancées, sur un joueur pour ses stats. L'étoile d'une équipe en fait ton équipe : ses matchs passent en premier.</div>\n    </div>";
 /*CSS-MOVED*/ const CSS = `#nbaDay{font-size:17px;color:#fff}
 #nbaDayNav{margin-left:auto}
 #nbaTabs{margin-left:12px}
@@ -66,6 +66,7 @@ export default async function (ctx) {
     if (Object.keys(prefs).length) await folder.write('prefs', prefs);
   }
   const neo = { win: a => ctx.host.win?.(a), getSettings: async () => prefs, setSettings: async s => { Object.assign(prefs, s); await folder.write('prefs', prefs); return prefs; } };
+  const favs = () => [...new Set([...(prefs.nbaTeams || []), ...(prefs.nbaTeam ? [prefs.nbaTeam] : [])])], isFav = a => favs().includes(a);  // plusieurs équipes favorites (l'ancien réglage « nbaTeam » en fait partie)
   // ---- ton code d'origine ----
   /* ---------- NBA: a game's page (score by quarter, team stats, advanced stats, box score) and a player's page (bio, season and career
      averages, last games), from ESPN's public JSON like the rest of the app. A click on a game opens it, a click on a player opens him. ---------- */
@@ -201,9 +202,9 @@ export default async function (ctx) {
   const nbaFr = s => s.replace(/End of (\d)\w+/, 'Fin du $1e QT').replace(/(\d)(st|nd|rd|th)( Quarter)?/, '$1e QT').replace(/Halftime/, 'Mi-temps').replace(/\bOT\b/, 'prol.').replace(/Final/, 'Terminé');
   console.assert(nbaFr('7:32 - 3rd') === '7:32 - 3e QT' && nbaFr('End of 1st') === 'Fin du 1e QT' && nbaFr('Final/OT') === 'Terminé/prol.', 'nbaFr');
   const nbaStar = abbr => {
-    const b = el('button', 'nbaStar' + (prefs.nbaTeam === abbr ? ' on' : ''), prefs.nbaTeam === abbr ? '★' : '☆');
-    b.title = prefs.nbaTeam === abbr ? "Ce n'est plus mon équipe" : 'Mon équipe : ses matchs passent en premier';
-    b.onclick = async e => { e.stopPropagation(); prefs = await neo.setSettings({nbaTeam: prefs.nbaTeam === abbr ? '' : abbr}); nbaRender(); };
+    const b = el('button', 'nbaStar' + (isFav(abbr) ? ' on' : ''), isFav(abbr) ? '★' : '☆');
+    b.title = isFav(abbr) ? "Ce n'est plus une de mes équipes" : 'Une de mes équipes : ses matchs passent en premier et vont dans mon emploi du temps';
+    b.onclick = async e => { e.stopPropagation(); const set = new Set(favs()); set.has(abbr) ? set.delete(abbr) : set.add(abbr); prefs = await neo.setSettings({nbaTeams: [...set], nbaTeam: ''}); nbaRender(); nbaCalendar(); };
     return b;
   };
   async function nbaRender() {
@@ -220,7 +221,7 @@ export default async function (ctx) {
       if (nbaView === 'standings') return nbaStandings(await nbaFetch('v2/sports/basketball/nba/standings'));
       const sb = await nbaFetch('site/v2/sports/basketball/nba/scoreboard?dates=' + nbaDate.replace(/-/g, ''));
       const games = (sb.events || []).map(e => ({e, c: e.competitions[0]})).sort((a, b) => {
-        const fav = g => g.c.competitors.some(t => t.team.abbreviation === prefs.nbaTeam) ? 0 : 1;
+        const fav = g => g.c.competitors.some(t => isFav(t.team.abbreviation)) ? 0 : 1;
         return fav(a) - fav(b) || a.e.date.localeCompare(b.e.date);
       });
       $('nbaGames').replaceChildren(...(games.length ? games.map(nbaCard) : [el('div', 'hint', 'Aucun match cette nuit-là.')]));
@@ -229,7 +230,7 @@ export default async function (ctx) {
   }
   function nbaCard({e, c}) {
     const st = e.status.type, card = el('div', 'sysCard px nbaGame'), teams = [...c.competitors].sort((a, b) => a.homeAway === 'away' ? -1 : 1);
-    if (teams.some(t => t.team.abbreviation === prefs.nbaTeam)) card.classList.add('fav');
+    if (teams.some(t => isFav(t.team.abbreviation))) card.classList.add('fav');
     for (const t of teams) {
       const r = el('div', 'nbaTeam' + (st.state === 'post' && !t.winner ? ' lost' : '')), logo = el('img'), n = el('div', 'tn');
       logo.src = t.team.logo || ''; logo.onerror = () => logo.style.visibility = 'hidden';
@@ -259,7 +260,7 @@ export default async function (ctx) {
       const head = el('div', 'nbaRow head'); head.append(el('span', '', '#'), el('span', '', ''), el('span', '', 'Équipe'), el('span', '', 'V-D'), el('span', '', '%'), el('span', '', 'Écart'), el('span', '', 'Série'));
       card.append(head);
       rows.forEach((en, i) => {
-        const r = el('div', 'nbaRow' + (en.team.abbreviation === prefs.nbaTeam ? ' fav' : '') + (i === 6 || i === 10 ? ' cut' : '')), logo = el('img');
+        const r = el('div', 'nbaRow' + (isFav(en.team.abbreviation) ? ' fav' : '') + (i === 6 || i === 10 ? ' cut' : '')), logo = el('img');
         logo.src = en.team.logos?.[0]?.href || ''; logo.onerror = () => logo.style.visibility = 'hidden';
         const name = el('span', 'tn', en.team.shortDisplayName || en.team.displayName);
         name.append(nbaStar(en.team.abbreviation));
@@ -275,7 +276,26 @@ export default async function (ctx) {
   $('nbaNext').onclick = () => { nbaDate = ymd(addDays(new Date(nbaDate + 'T12:00'), 1)); nbaRender(); };
   $('nbaToday').onclick = () => { nbaDate = nbaDefault(); nbaRender(); };
   $('nbaTabs').onclick = e => { const v = e.target.dataset.v; if (v) { nbaView = v; nbaBack = null; $('nbaDetail').style.display = 'none'; nbaRender(); } };
+  // ---- les matchs de tes équipes dans ton emploi du temps ----
+  const hm = mn => String(Math.floor(mn / 60)).padStart(2, '0') + ':' + String(mn % 60).padStart(2, '0');
+  async function nbaCalendar() {
+    const evs = new Map();
+    if (prefs.nbaCalendar !== false) for (const abbr of favs()) {
+      try {
+        const j = await nbaFetch('site/v2/sports/basketball/nba/teams/' + abbr.toLowerCase() + '/schedule');
+        for (const e of j.events || []) {
+          const d = new Date(e.date); if (d < new Date(Date.now() - 36e5) || d > new Date(Date.now() + 75 * 864e5)) continue;
+          const cs = e.competitions?.[0]?.competitors || [], home = cs.find(c => c.homeAway === 'home')?.team, away = cs.find(c => c.homeAway === 'away')?.team, s = d.getHours() * 60 + d.getMinutes();
+          evs.set(e.id, {id: 'nba:' + e.id, kind: 'event', title: 'NBA · ' + (away?.displayName || '?') + ' à ' + (home?.displayName || '?'), date: ymd(d), start: hm(s), end: hm(Math.min(1439, s + 150)), allDay: false, color: '#e89a3a', place: 'Match NBA'});
+        }
+      } catch {}
+    }
+    ctx.host.agenda?.sync('nba', [...evs.values()].sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)));
+  }
+  $('nbaCal').checked = prefs.nbaCalendar !== false;
+  $('nbaCal').onchange = async () => { prefs = await neo.setSettings({nbaCalendar: $('nbaCal').checked}); nbaCalendar(); ctx.host.toast(prefs.nbaCalendar ? 'Les matchs de tes équipes sont dans ton emploi du temps' : 'Les matchs ne sont plus dans ton emploi du temps'); };
+  nbaCalendar(); const calTimer = setInterval(nbaCalendar, 3 * 3600e3);
   // ---- fin ----
   ctx.onOpen(() => { nbaRender(); });
-  ctx.onClose(() => { clearTimeout(nbaTimer); });
+  ctx.onClose(() => { clearTimeout(nbaTimer); clearInterval(calTimer); });
 }
