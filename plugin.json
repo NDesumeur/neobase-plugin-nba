@@ -1,0 +1,19 @@
+{
+  "id": "neobase.nba",
+  "name": "NBA",
+  "version": "1.0.0",
+  "author": "NDesumeur",
+  "description": "Scores et classements NBA de chaque nuit, feuilles de match et fiches joueurs (données ESPN).",
+  "icon": "icon.png",
+  "entry": "index.js",
+  "view": "nba",
+  "neobase": ">=4.0.0",
+  "type": "app",
+  "category": "Sport",
+  "mobile": true,
+  "system": false,
+  "dependencies": {},
+  "permissions": [
+    "full"
+  ]
+}
