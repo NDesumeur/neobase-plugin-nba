@@ -2,11 +2,58 @@
 // Ses données sont dans le dossier du plugin, que NeoBase sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoBase.
 // Elle demande l'accès complet pour utiliser les outils d'interface de NeoBase. NeoBase ne l'ouvre que si elle est signée.
 const HTML = "<div class=\"appWrap\">\n      <div class=\"agHead\"><span class=\"label\">NBA</span><span id=\"nbaDay\"></span>\n        <div class=\"agNav\" id=\"nbaDayNav\"><button class=\"btn px\" id=\"nbaPrev\" title=\"Nuit précédente\">&lt;</button><button class=\"btn px\" id=\"nbaToday\">CETTE NUIT</button><button class=\"btn px\" id=\"nbaNext\" title=\"Nuit suivante\">&gt;</button></div>\n        <div class=\"agNav\" id=\"nbaTabs\"><button class=\"btn px\" data-v=\"games\">MATCHS</button><button class=\"btn px\" data-v=\"standings\">CLASSEMENT</button></div></div>\n      <div id=\"nbaGames\" class=\"nbaGrid\"></div>\n      <div id=\"nbaStandings\" class=\"stCols\"></div>\n      <div id=\"nbaDetail\" style=\"display:none\"></div>\n      <div class=\"hint\">Données ESPN, heures de Paris. Clique sur un match pour sa feuille de match et ses stats avancées, sur un joueur pour ses stats. L'étoile d'une équipe en fait ton équipe : ses matchs passent en premier.</div>\n    </div>";
+/*CSS-MOVED*/ const CSS = `#nbaDay{font-size:17px;color:#fff}
+#nbaDayNav{margin-left:auto}
+#nbaTabs{margin-left:12px}
+#nbaTabs .btn.on{--c:var(--magenta);color:#fff}
+.nbaGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.nbaGame{gap:8px}
+.nbaGame.fav{--c:var(--magenta)}
+.nbaScore{font:20px var(--title);color:#fff;text-align:right}
+.nbaTeam.lost .tn{color:var(--muted)}
+.nbaTeam.lost .nbaScore{color:var(--muted)}
+.nbaStatus{font:8px var(--title);letter-spacing:1px;color:var(--lilac);padding-top:6px;border-top:1px solid rgba(255,255,255,.06)}
+.nbaStatus.live{color:#fff}
+.nbaStatus.live::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;background:var(--red);animation:blink 1s steps(2) infinite}
+.nbaStar{all:unset;cursor:var(--cp,pointer);color:var(--muted);font-size:16px;padding:0 4px}
+.nbaStar:hover,.nbaStar.on{color:#ffd07a}
+.nbaRow{display:grid;grid-template-columns:24px 24px 1fr 56px 52px 44px 40px;gap:8px;align-items:center;font-size:14px;color:var(--lilac);padding:4px 0}
+.nbaRow img{width:22px;height:22px;object-fit:contain}
+.nbaRow .tn{color:#fff;display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap;overflow:hidden}
+.nbaGame.click{cursor:var(--cp,pointer)}
+.nbaGame.click:hover{--c:var(--violet)}
+.nbaPl{all:unset;cursor:var(--cp,pointer);color:#fff;text-decoration:underline dotted rgba(255,255,255,.35)}
+.nbaPl:hover{color:var(--pink)}
+.nbaPl.st{font-weight:600}
+#nbaDetail{display:flex;flex-direction:column;gap:20px;align-items:flex-start}
+#nbaDetail>.sysCard{align-self:stretch;overflow-x:auto}
+.nbaTable{border-collapse:collapse;font-size:14px;color:var(--lilac);width:100%}
+.nbaTable th{font:7px var(--title);letter-spacing:1px;color:var(--muted);text-align:right;padding:6px 8px;white-space:nowrap}
+.nbaTable td{text-align:right;padding:5px 8px;border-top:1px solid rgba(255,255,255,.06);white-space:nowrap}
+.nbaTable th:first-child,.nbaTable td:first-child{text-align:left}
+.nbaTable tr:hover td{background:rgba(var(--pkr),.06)}
+.nbaCmp{display:grid;grid-template-columns:70px 1fr 70px;gap:4px 10px;align-items:center;font-size:14px;color:var(--lilac)}
+.nbaCmp b{color:#fff;font-weight:600}
+.nbaCmp b:last-of-type{text-align:right}
+.nbaCmp span{text-align:center}
+.nbaBar{grid-column:1/-1;display:flex;gap:2px;height:6px}
+.nbaBar i{background:var(--line2)}
+.nbaBar i.win{background:var(--magenta)}
+.nbaBio{flex-direction:row!important;gap:20px;align-items:center}
+.nbaBio img{width:150px;height:110px;object-fit:cover;object-position:top;background:rgba(0,0,0,.2)}
+.nbaName{font:16px var(--title);color:#fff;margin-bottom:6px}
+.nbaFacts{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin-top:10px;font-size:14px;color:var(--muted)}
+.nbaFacts b{color:#fff;font-weight:500}
+.nbaRow.head{font:7px var(--title);letter-spacing:1px;color:var(--muted)}
+.nbaRow.fav{background:rgba(var(--mgr),.14)}
+.nbaRow.cut{border-top:2px dashed var(--line2);margin-top:4px;padding-top:8px}
+`;  // le style de ce plugin (il utilise les variables du thème de NeoBase)
 export default async function (ctx) {
   const view = ctx.view;
   if (!ctx.host) { view.textContent = "Ce plugin doit être approuvé par NeoBase pour s'ouvrir."; return; }
   const { el, toast, sfx, ask, newTab, pixIcon, PIX, WX } = ctx.host;
   const folder = ctx.folder, legacy = ctx.legacy || {};
+  ctx.host.addStyle(CSS);
   view.innerHTML = HTML;
   const $ = id => id === "nbaApp" ? view : view.querySelector('#' + id);  // les identifiants de ta vue, sans toucher à ceux du reste de NeoBase
   const doc = async n => { try { return await folder.read(n); } catch { return null; } };

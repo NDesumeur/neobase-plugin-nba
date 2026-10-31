@@ -1,9 +1,0 @@
-{
-  "pluginId": "neobase.nba",
-  "repo": "NDesumeur/neobase-plugin-nba",
-  "version": "1.0.0",
-  "sha256": "c93287931cad852a37bf3591d8efdcbc0961d782ac188ea0306f4c5fc58e815a",
-  "approvedAt": "2026-10-31T04:26:41.116Z",
-  "neobase": ">=4.0.0",
-  "signature": "Ggpoxcfp+4eiOgsO3TR3kY16RnbRDPyuq2DE4A7JqcYQjZgb5wiOwGCvdSGX832XmclhpkfSFqsVESN3C00MBw=="
-}
