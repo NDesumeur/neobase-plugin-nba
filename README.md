@@ -1,11 +1,11 @@
 # NBA
 
-Les scores et les classements NBA de chaque nuit dans NeoBase, avec la feuille de match, les stats avancees et la fiche de chaque joueur. Choisis ton equipe avec l'etoile : ses matchs passent en premier. Donnees ESPN.
+Scores et classements NBA de chaque nuit, feuilles de match et fiches joueurs (données ESPN).
 
-Ton equipe est rangee dans le dossier du plugin, que NeoBase sauvegarde (synchro cloud comprise).
+Ses données sont rangées dans le dossier du plugin, que NeoBase sauvegarde (synchro cloud comprise). Au premier lancement, il reprend ce que tu avais déjà dans NeoBase.
 
 ## Installer
 
-Dans NeoBase : **NeoStore -> A decouvrir -> NBA -> Installer**.
+Dans NeoBase : **NeoStore → À découvrir → NBA → Installer**.
 
-Developper un plugin : voir le [SDK NeoBase](https://github.com/NDesumeur/neobase-sdk).
+Développer un plugin : voir le [SDK NeoBase](https://github.com/NDesumeur/neobase-sdk).

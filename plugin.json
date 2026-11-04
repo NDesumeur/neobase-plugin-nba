@@ -1,7 +1,7 @@
 {
   "id": "neobase.nba",
   "name": "NBA",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "NDesumeur",
   "description": "Scores et classements NBA de chaque nuit, feuilles de match et fiches joueurs (données ESPN).",
   "icon": "icon.png",
@@ -13,8 +13,14 @@
   "mobile": true,
   "system": false,
   "dependencies": {},
+  "autoload": true,
+  "sdk": "2.1.0",
   "permissions": [
-    "full"
-  ],
-  "autoload": true
+    "storage",
+    "agenda",
+    "background",
+    "network:a.espncdn.com",
+    "network:site.api.espn.com",
+    "network:site.web.api.espn.com"
+  ]
 }
