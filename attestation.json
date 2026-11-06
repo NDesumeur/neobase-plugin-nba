@@ -1,9 +1,9 @@
 {
   "pluginId": "neodex.nba",
   "repo": "NDesumeur/neodex-plugin-nba",
-  "version": "1.2.0",
-  "sha256": "86438e00b534c50a163ed2873cdb0738f858f4288f495af8e2d0f01f04d3aab9",
-  "approvedAt": "2026-11-04T10:05:10.913Z",
+  "version": "1.2.1",
+  "sha256": "364a8bd2f241b4a338c03fc54583cc87fffeb3b8a59d0edb8883f36d505fb6c5",
+  "approvedAt": "2026-11-06T21:35:48.007Z",
   "neobase": ">=4.0.0",
-  "signature": "cCXfDYciJzgqcEHq+DIJC34WF/WMQh/rIpI8TqQM4BCdAP4TsXBdCGdyXLoSlXIlDv9oUlohcS6S469oHG6oAg=="
+  "signature": "e5L29r0ESyo7K0OdH+uXvhr+CZVtMvux2g9JcerFPpeGt7/CQLNyEhmk9/JSWozT+CTJtYOEFyi39YqAeV86BQ=="
 }
